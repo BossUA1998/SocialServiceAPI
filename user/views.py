@@ -9,7 +9,13 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework import status, generics, viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from user.serializers import UserSerializer, LogoutSerializer, AnyUserSerializer
+from social_startapp.models import Subscriber
+from user.serializers import (
+    UserSerializer,
+    LogoutSerializer,
+    AnyUserSerializer,
+    EmptySerializer,
+)
 
 
 class LogoutView(generics.GenericAPIView):
@@ -74,12 +80,27 @@ class AnyUserView(viewsets.ReadOnlyModelViewSet):
             return redirect("user:account_user")
         return super().retrieve(request, *args, **kwargs)
 
+    def post(self, request, *args, **kwargs):
+        obj, is_created = Subscriber.objects.get_or_create(
+            subscriber=request.user,
+            author_id=self.kwargs["pk"],
+        )
+        if not is_created:
+            obj.delete()
+        return Response(status=status.HTTP_200_OK)
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return EmptySerializer
+        return AnyUserSerializer
+
     def get_queryset(self):
         if username := self.request.query_params.get("username"):
             return self.queryset.filter(username__icontains=username).exclude(
                 Q(username__istartswith="no_search")
                 | Q(username=self.request.user.username)
             )
+        return self.queryset.none()
 
     def get_object(self):
         user = get_object_or_404(get_user_model(), pk=self.kwargs["pk"])

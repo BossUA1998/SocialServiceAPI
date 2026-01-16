@@ -4,11 +4,21 @@ from rest_framework import serializers
 User = get_user_model()
 
 
+class EmptySerializer(serializers.Serializer): ...
+
+
 class LogoutSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    subscriptions = serializers.IntegerField(
+        source="subscriptions.count", read_only=True
+    )
+    followers = serializers.IntegerField(
+        source="followers.count", read_only=True
+    )
+
     class Meta:
         model = User
         fields = (
@@ -20,6 +30,8 @@ class UserSerializer(serializers.ModelSerializer):
             "password",
             "image",
             "biography",
+            "followers",
+            "subscriptions",
         )
         extra_kwargs = {
             "password": {

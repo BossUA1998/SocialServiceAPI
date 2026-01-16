@@ -1,3 +1,18 @@
-from django.shortcuts import render
+from rest_framework import mixins, viewsets
 
-# Create your views here.
+from social_startapp.models import Subscriber
+from social_startapp.serializers import SubscriptionsSerializer, FollowersSerializer
+
+
+class MySubscribeView(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = SubscriptionsSerializer
+
+    def get_queryset(self):
+        return self.request.user.subscriptions.all()
+
+
+class SubscribersView(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = FollowersSerializer
+
+    def get_queryset(self):
+        return self.request.user.followers.all()
