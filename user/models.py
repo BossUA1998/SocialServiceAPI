@@ -1,9 +1,25 @@
+import os
+import uuid
+
 from django.contrib.auth.models import (
     AbstractUser,
     BaseUserManager as AbstractUserManager,
 )
 from django.db import models
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
+
+
+def _uuid_photo_save(instance: "User", filename: str) -> str:
+    _, ext = os.path.splitext(filename)
+
+    return os.path.join(
+        "user_images/",
+        f"{slugify(instance.email)}-{uuid.uuid4()}{ext}",
+    )
+
+def _get_default_username():
+    return uuid.uuid4()
 
 
 class UserManager(AbstractUserManager):
@@ -36,8 +52,10 @@ class UserManager(AbstractUserManager):
 
 
 class User(AbstractUser):
-    username = None
+    username = models.CharField(max_length=52, unique=True, default=_get_default_username())
     email = models.EmailField(_("email address"), unique=True)
+    image = models.ImageField(blank=True, upload_to=_uuid_photo_save)
+    biography = models.TextField(blank=True, max_length=512)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
