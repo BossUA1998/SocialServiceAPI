@@ -42,3 +42,20 @@ class UserSerializer(serializers.ModelSerializer):
             user.set_password(password)
             user.save()
         return user
+
+
+class AnyUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "image",
+            "biography",
+        )
+
+    def create(self, validated_data): ...
+
+    def update(self, instance, validated_data): ...

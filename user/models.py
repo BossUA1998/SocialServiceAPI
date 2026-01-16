@@ -15,11 +15,12 @@ def _uuid_photo_save(instance: "User", filename: str) -> str:
 
     return os.path.join(
         "user_images/",
-        f"{slugify(instance.email)}-{uuid.uuid4()}{ext}",
+        f"{instance.pk}-{uuid.uuid4()}{ext}",
     )
 
+
 def _get_default_username():
-    return uuid.uuid4()
+    return f"no_search-{uuid.uuid4()}"
 
 
 class UserManager(AbstractUserManager):
@@ -52,7 +53,9 @@ class UserManager(AbstractUserManager):
 
 
 class User(AbstractUser):
-    username = models.CharField(max_length=52, unique=True, default=_get_default_username())
+    username = models.CharField(
+        max_length=52, unique=True, default=_get_default_username()
+    )
     email = models.EmailField(_("email address"), unique=True)
     image = models.ImageField(blank=True, upload_to=_uuid_photo_save)
     biography = models.TextField(blank=True, max_length=512)

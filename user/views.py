@@ -1,16 +1,15 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
-from rest_framework.exceptions import ValidationError
+from django.db.models import Q
 from rest_framework.generics import get_object_or_404
-from rest_framework.reverse import reverse
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework import status, generics
+from rest_framework import status, generics, viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from user.serializers import UserSerializer, LogoutSerializer
+from user.serializers import UserSerializer, LogoutSerializer, AnyUserSerializer
 
 
 class LogoutView(generics.GenericAPIView):
@@ -24,7 +23,7 @@ class LogoutView(generics.GenericAPIView):
 
         try:
             token = RefreshToken(refresh_token)
-            if int(token["user_id"]) == request.user.id:
+            if token["user_id"] == str(request.user.id):
                 token.blacklist()
             else:
                 return Response(
@@ -65,14 +64,22 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
-class AnyUserView(generics.RetrieveAPIView):
+class AnyUserView(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
-    serializer_class = UserSerializer
+    serializer_class = AnyUserSerializer
+    queryset = get_user_model().objects
 
-    def get(self, request, *args, **kwargs):
-        if self.request.user.id == self.kwargs["pk"]:
+    def retrieve(self, request, *args, **kwargs):
+        if str(self.request.user.id) == self.kwargs["pk"]:
             return redirect("user:account_user")
-        return super().get(request, *args, **kwargs)
+        return super().retrieve(request, *args, **kwargs)
+
+    def get_queryset(self):
+        if username := self.request.query_params.get("username"):
+            return self.queryset.filter(username__icontains=username).exclude(
+                Q(username__istartswith="no_search")
+                | Q(username=self.request.user.username)
+            )
 
     def get_object(self):
         user = get_object_or_404(get_user_model(), pk=self.kwargs["pk"])
