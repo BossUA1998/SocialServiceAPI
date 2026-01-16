@@ -7,22 +7,30 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework import status, generics
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from user.serializers import UserSerializer
+from user.serializers import UserSerializer, LogoutSerializer
 
 
-class LogoutView(APIView):
+class LogoutView(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = LogoutSerializer
 
     def post(self, request):
-        refresh_token = request.data.get("refresh_token")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        refresh_token = serializer.validated_data["refresh_token"]
 
         try:
             token = RefreshToken(refresh_token)
-            token.blacklist()
-
-            return Response(status=status.HTTP_200_OK)
+            if int(token["user_id"]) == request.user.id:
+                token.blacklist()
+            else:
+                return Response(
+                    {"error": "Not your token"}, status=status.HTTP_403_FORBIDDEN
+                )
         except TokenError:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(status=status.HTTP_200_OK)
 
 
 class CreateUserView(generics.GenericAPIView):
@@ -46,4 +54,9 @@ class CreateUserView(generics.GenericAPIView):
         )
 
 
-class ManageUserView(APIView): ...
+class ManageUserView(generics.RetrieveUpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user

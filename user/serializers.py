@@ -4,6 +4,10 @@ from rest_framework import serializers
 User = get_user_model()
 
 
+class LogoutSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField()
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -23,11 +27,9 @@ class UserSerializer(serializers.ModelSerializer):
         password = self.validated_data.pop(
             "password",
         )
-
         user = super().update(instance, validated_data)
 
         if password:
             user.set_password(password)
             user.save()
-
         return user
