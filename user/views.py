@@ -1,5 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.shortcuts import redirect
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import get_object_or_404
+from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -60,3 +63,19 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class AnyUserView(generics.RetrieveAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+
+    def get(self, request, *args, **kwargs):
+        if self.request.user.id == self.kwargs["pk"]:
+            return redirect("user:account_user")
+        return super().get(request, *args, **kwargs)
+
+    def get_object(self):
+        user = get_object_or_404(get_user_model(), pk=self.kwargs["pk"])
+        self.check_object_permissions(self.request, user)
+
+        return user
