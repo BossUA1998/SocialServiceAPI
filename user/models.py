@@ -53,9 +53,7 @@ class UserManager(AbstractUserManager):
 
 
 class User(AbstractUser):
-    username = models.CharField(
-        max_length=52, unique=True, default=_get_default_username()
-    )
+    username = models.CharField(max_length=52, default=_get_default_username())
     email = models.EmailField(_("email address"), unique=True)
     image = models.ImageField(blank=True, upload_to=_uuid_photo_save)
     biography = models.TextField(blank=True, max_length=512)
