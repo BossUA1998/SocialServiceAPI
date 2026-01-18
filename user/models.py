@@ -15,7 +15,7 @@ def _uuid_photo_save(instance: "User", filename: str) -> str:
 
     return os.path.join(
         "user_images/",
-        f"{instance.pk}-{uuid.uuid4()}{ext}",
+        f"{uuid.uuid4()}{ext}",
     )
 
 

@@ -3,7 +3,6 @@ from django.shortcuts import redirect
 from django.db.models import Q
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework import status, generics, viewsets
@@ -19,7 +18,6 @@ from user.serializers import (
 
 
 class LogoutView(generics.GenericAPIView):
-    permission_classes = (IsAuthenticated,)
     serializer_class = LogoutSerializer
 
     def post(self, request):
@@ -63,7 +61,6 @@ class CreateUserView(generics.GenericAPIView):
 
 
 class ManageUserView(generics.RetrieveUpdateAPIView):
-    permission_classes = (IsAuthenticated,)
     serializer_class = UserSerializer
 
     def get_object(self):
@@ -71,7 +68,6 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
 
 
 class AnyUserView(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (IsAuthenticated,)
     serializer_class = AnyUserSerializer
     queryset = get_user_model().objects
 

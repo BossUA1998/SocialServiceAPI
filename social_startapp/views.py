@@ -1,5 +1,6 @@
 from rest_framework import mixins, viewsets, status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from social_startapp.models import Subscriber, Post, Comment
@@ -29,11 +30,11 @@ class SubscribersView(mixins.ListModelMixin, viewsets.GenericViewSet):
 
 class PostsViewSet(viewsets.ModelViewSet):
     queryset = Post.objects
-    permission_classes = (IsAuthorOrReadOnly,)
+    permission_classes = (IsAuthorOrReadOnly, IsAuthenticated)
 
     def get_queryset(self):
         return self.queryset.filter(
-            author__in=self.request.user.subscriptions.values_list("author")
+            author__in=self.request.user.subscriptions.values_list("author", flat=True)
         )
 
     def get_serializer_class(self):
@@ -52,31 +53,48 @@ class PostsViewSet(viewsets.ModelViewSet):
             obj.who_liked.add(self.request.user)
         return Response(status=status.HTTP_200_OK)
 
+    def get_permissions(self):
+        if self.action == "comment":
+            return (IsAuthenticated(),)
+        return super().get_permissions()
+
     @action(
-        methods=["POST"],
+        methods=["POST", "DELETE", "PUT"],
         detail=True,
         url_path="comment",
     )
     def comment(self, request, *args, **kwargs):
-        serializer = CommentSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(author=self.request.user, post=self.get_object())
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        # if self.request.method == "DELETE":
-        #     self.get_object().delete()
-        #     return Response(status=status.HTTP_204_NO_CONTENT)
-        # if self.request.method == "POST":
-        #     print(kwargs)
-        #     serializer = CommentSerializer(data=request.data)
-        # else:
-        #     serializer = CommentSerializer(
-        #         data=request.data, instance=self.get_object()
-        #     )
-        # if serializer.is_valid():
-        #     serializer.save(author=self.request.user, post=self.get_object())
-        #     return Response(serializer.data, status=status.HTTP_201_CREATED)
-        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        post = self.get_object()
+        comment_obj = post.comments.filter(author=request.user).first()
+
+        if comment_obj:
+            if request.method == "DELETE":
+                comment_obj.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            elif request.method == "PUT":
+                serializer = CommentSerializer(
+                    comment_obj, data=request.data, partial=True
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {"detail": "You have already commented on this post."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        else:
+            if request.method == "POST":
+                serializer = CommentSerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save(author=request.user, post=post)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(
+            {"detail": "Comment not found."}, status=status.HTTP_404_NOT_FOUND
+        )
 
 
 class MyPostsViewSet(viewsets.ModelViewSet):

@@ -20,6 +20,8 @@ post_detail = PostsViewSet.as_view(
 comment = PostsViewSet.as_view(
     {
         "post": "comment",
+        "put": "comment",
+        "delete": "comment",
     }
 )
 
