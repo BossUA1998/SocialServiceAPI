@@ -14,6 +14,7 @@ from social_startapp.serializers import (
     PostsSerializer,
     PostsDetailSerializer,
     CommentSerializer,
+    MyPostsDetailSerializer,
 )
 from django.db.models import Count
 from user.serializers import EmptySerializer
@@ -42,17 +43,18 @@ class PostsViewSet(viewsets.ModelViewSet):
         return map(lambda x: "#" + x, hashtags.split(","))
 
     def get_queryset(self):
-        if hashtags := self.request.query_params.get("hashtags"):
-            print("ok")
-            return self.queryset.filter(
-                hashtags__name__in=self._hashtags_to_iter_obj(hashtags)
-            ).exclude(author=self.request.user)
-
         self.queryset = (
             self.queryset.select_related("author")
             .prefetch_related("who_liked")
             .filter(author__followers__subscriber=self.request.user)
         )
+        if hashtags := self.request.query_params.get("hashtags"):
+            return (
+                self.queryset.prefetch_related("hashtags")
+                .filter(hashtags__name__in=self._hashtags_to_iter_obj(hashtags))
+                .exclude(author=self.request.user)
+            )
+
         if self.action == "retrieve":
             return self.queryset.prefetch_related("comments__author")
 
@@ -118,10 +120,13 @@ class PostsViewSet(viewsets.ModelViewSet):
 
 
 class MyPostsViewSet(viewsets.ModelViewSet):
-    serializer_class = MyPostsSerializer
-
     def get_queryset(self):
         return self.request.user.posts.prefetch_related("who_liked")
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action in ("update", "partial_update"):
+            return MyPostsSerializer
+        return MyPostsDetailSerializer

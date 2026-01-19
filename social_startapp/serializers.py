@@ -33,11 +33,12 @@ class HashTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = HashTag
         fields = ("id", "name")
+        extra_kwargs = {"name": {"validators": []}}
 
 
 class MyPostsSerializer(serializers.ModelSerializer):
     likes = serializers.IntegerField(source="who_liked.count", read_only=True)
-    hashtags = HashTagSerializer(many=True)
+    hashtags = HashTagSerializer(many=True, required=False)
 
     class Meta:
         model = Post
@@ -66,25 +67,29 @@ class MyPostsSerializer(serializers.ModelSerializer):
             return post
 
     def update(self, instance, validated_data):
-        raw_tags = validated_data.pop("hashtags", None)
+        with transaction.atomic():
+            raw_tags = validated_data.pop("hashtags", None)
 
-        post = super().update(instance, validated_data)
-        post.hashtags.set(
-            HashTag.objects.get_or_create(name=tag)[0]
-            for tag in self._raw_tags_to_iter_obj(raw_tags)
-        )
+            post = super().update(instance, validated_data)
+            post.hashtags.set(
+                HashTag.objects.get_or_create(name=tag)[0]
+                for tag in self._raw_tags_to_iter_obj(raw_tags)
+            )
 
-        return post
+            return post
 
 
-class PostsSerializer(MyPostsSerializer):
-    author = AnyUserSerializer(read_only=True)
+class MyPostsDetailSerializer(MyPostsSerializer):
     hashtags = serializers.SlugRelatedField(
         slug_field="name", read_only=True, many=True
     )
 
-    class Meta(MyPostsSerializer.Meta):
-        fields = MyPostsSerializer.Meta.fields + [
+
+class PostsSerializer(MyPostsDetailSerializer):
+    author = AnyUserSerializer(read_only=True)
+
+    class Meta(MyPostsDetailSerializer.Meta):
+        fields = MyPostsDetailSerializer.Meta.fields + [
             "author",
         ]
 
