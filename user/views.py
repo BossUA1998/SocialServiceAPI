@@ -93,8 +93,7 @@ class AnyUserView(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         if username := self.request.query_params.get("username"):
             return self.queryset.filter(username__icontains=username).exclude(
-                Q(username__istartswith="no_search")
-                | Q(pk=self.request.user.pk)
+                Q(username__istartswith="no_search") | Q(pk=self.request.user.pk)
             )
         return self.queryset.none()
 

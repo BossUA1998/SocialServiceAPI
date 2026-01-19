@@ -15,9 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
     subscriptions = serializers.IntegerField(
         source="subscriptions.count", read_only=True
     )
-    followers = serializers.IntegerField(
-        source="followers.count", read_only=True
-    )
+    followers = serializers.IntegerField(source="followers.count", read_only=True)
 
     class Meta:
         model = User

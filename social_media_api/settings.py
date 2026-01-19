@@ -139,7 +139,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 SIMPLE_JWT = {
@@ -151,8 +151,8 @@ SIMPLE_JWT = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Social Media API',
-    'DESCRIPTION': 'My project',
-    'VERSION': '1.0.1',
-    'SERVE_INCLUDE_SCHEMA': False,
+    "TITLE": "Social Media API",
+    "DESCRIPTION": "My project",
+    "VERSION": "1.0.1",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
