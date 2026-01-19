@@ -24,6 +24,19 @@ class Subscriber(models.Model):
         unique_together = ("subscriber", "author")
 
 
+# class HashTag(models.Model):
+#     name = models.CharField(max_length=128)
+#
+#     def save(self, *args, **kwargs):
+#         if self.name:
+#             self.name = self.name.strip()
+#
+#             if not self.name.startswith("#"):
+#                 self.name = "#" + self.name
+#
+#         super().save(*args, **kwargs)
+
+
 class Post(models.Model):
     text = models.TextField(max_length=1024)
     author = models.ForeignKey(
@@ -34,6 +47,7 @@ class Post(models.Model):
     who_liked = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name="liked_posts"
     )
+    # hashtags = models.ManyToManyField(HashTag, related_name="posts")
 
     class Meta:
         ordering = ("created_at",)

@@ -8,9 +8,12 @@ from social_startapp.permissions import IsAuthorOrReadOnly
 from social_startapp.serializers import (
     SubscriptionsSerializer,
     FollowersSerializer,
+    MyPostsSerializer,
     PostsSerializer,
+    PostsDetailSerializer,
     CommentSerializer,
 )
+from django.db.models import Count
 from user.serializers import EmptySerializer
 
 
@@ -18,32 +21,42 @@ class MySubscribeView(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = SubscriptionsSerializer
 
     def get_queryset(self):
-        return self.request.user.subscriptions.all()
+        return self.request.user.subscriptions.select_related("author")
 
 
 class SubscribersView(mixins.ListModelMixin, viewsets.GenericViewSet):
     serializer_class = FollowersSerializer
 
     def get_queryset(self):
-        return self.request.user.followers.all()
+        return self.request.user.followers.select_related("subscriber")
 
 
 class PostsViewSet(viewsets.ModelViewSet):
     queryset = Post.objects
     permission_classes = (IsAuthorOrReadOnly, IsAuthenticated)
 
+    # @staticmethod
+    # def _str_in_hashtags(ht: str) -> list:
+    #     return [hashtag for hashtag in ht.split()]
+
     def get_queryset(self):
-        return self.queryset.filter(
-            author__in=self.request.user.subscriptions.values_list("author", flat=True)
+        # if hashtags := self.request.query_params.get("hashtags"):
+        self.queryset = (
+            self.queryset.select_related("author")
+            .prefetch_related("who_liked")
+            .filter(author__followers__subscriber=self.request.user)
         )
+        if self.action == "retrieve":
+            return self.queryset.prefetch_related("comments__author")
+
+        return self.queryset
 
     def get_serializer_class(self):
         if self.action == "like":
             return EmptySerializer
+        if self.action == "retrieve":
+            return PostsDetailSerializer
         return PostsSerializer
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
 
     def like(self, request, *args, **kwargs):
         obj = self.get_object()
@@ -98,7 +111,10 @@ class PostsViewSet(viewsets.ModelViewSet):
 
 
 class MyPostsViewSet(viewsets.ModelViewSet):
-    serializer_class = PostsSerializer
+    serializer_class = MyPostsSerializer
 
     def get_queryset(self):
-        return self.request.user.posts.all()
+        return self.request.user.posts.prefetch_related("who_liked")
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)

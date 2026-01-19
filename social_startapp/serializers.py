@@ -28,18 +28,33 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ("id", "author", "text", "created_at")
 
 
-class PostsSerializer(serializers.ModelSerializer):
-    author = AnyUserSerializer(read_only=True)
+class MyPostsSerializer(serializers.ModelSerializer):
     likes = serializers.IntegerField(source="who_liked.count", read_only=True)
-    comments = CommentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Post
-        fields = (
+        fields = [
             "id",
             "created_at",
             "text",
-            "author",
             "likes",
+            # "hashtags"
+        ]
+
+
+class PostsSerializer(MyPostsSerializer):
+    author = AnyUserSerializer(read_only=True)
+
+    class Meta(MyPostsSerializer.Meta):
+        fields = MyPostsSerializer.Meta.fields + [
+            "author",
+        ]
+
+
+class PostsDetailSerializer(PostsSerializer):
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta(PostsSerializer.Meta):
+        fields = PostsSerializer.Meta.fields + [
             "comments",
-        )
+        ]

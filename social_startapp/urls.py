@@ -13,7 +13,7 @@ router.register("subscriptions", MySubscribeView, basename="subscriptions")
 router.register("followers", SubscribersView, basename="followers")
 router.register("my_posts", MyPostsViewSet, basename="my_posts")
 
-post_list = PostsViewSet.as_view({"get": "list", "post": "create"})
+post_list = PostsViewSet.as_view({"get": "list"})
 post_detail = PostsViewSet.as_view(
     {"get": "retrieve", "post": "like", "put": "update", "patch": "partial_update"}
 )

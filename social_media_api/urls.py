@@ -16,12 +16,19 @@ Including another URLconf
 """
 
 from django.conf import settings
+from debug_toolbar.toolbar import debug_toolbar_urls
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
-urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("user/", include("user.urls", namespace="user")),
-    path("social_app/", include("social_startapp.urls", namespace="social_startapp")),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns = (
+    [
+        path("admin/", admin.site.urls),
+        path("user/", include("user.urls", namespace="user")),
+        path(
+            "social_app/", include("social_startapp.urls", namespace="social_startapp")
+        ),
+    ]
+    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    + debug_toolbar_urls()
+)
