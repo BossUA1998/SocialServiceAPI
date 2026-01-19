@@ -24,17 +24,17 @@ class Subscriber(models.Model):
         unique_together = ("subscriber", "author")
 
 
-# class HashTag(models.Model):
-#     name = models.CharField(max_length=128)
-#
-#     def save(self, *args, **kwargs):
-#         if self.name:
-#             self.name = self.name.strip()
-#
-#             if not self.name.startswith("#"):
-#                 self.name = "#" + self.name
-#
-#         super().save(*args, **kwargs)
+class HashTag(models.Model):
+    name = models.CharField(max_length=128, unique=True)
+
+    def save(self, *args, **kwargs):
+        if self.name:
+            self.name = self.name.strip().lower()
+
+            if not self.name.startswith("#"):
+                self.name = "#" + self.name
+
+        super().save(*args, **kwargs)
 
 
 class Post(models.Model):
@@ -47,7 +47,7 @@ class Post(models.Model):
     who_liked = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name="liked_posts"
     )
-    # hashtags = models.ManyToManyField(HashTag, related_name="posts")
+    hashtags = models.ManyToManyField(HashTag, related_name="posts", blank=True)
 
     class Meta:
         ordering = ("created_at",)
@@ -55,6 +55,8 @@ class Post(models.Model):
 
 class Comment(models.Model):
     text = models.TextField(max_length=512)
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments"
+    )
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
     created_at = models.DateTimeField(auto_now_add=True)

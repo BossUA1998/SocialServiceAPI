@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import mixins, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -35,12 +37,17 @@ class PostsViewSet(viewsets.ModelViewSet):
     queryset = Post.objects
     permission_classes = (IsAuthorOrReadOnly, IsAuthenticated)
 
-    # @staticmethod
-    # def _str_in_hashtags(ht: str) -> list:
-    #     return [hashtag for hashtag in ht.split()]
+    @staticmethod
+    def _hashtags_to_iter_obj(hashtags: str) -> map:
+        return map(lambda x: "#" + x, hashtags.split(","))
 
     def get_queryset(self):
-        # if hashtags := self.request.query_params.get("hashtags"):
+        if hashtags := self.request.query_params.get("hashtags"):
+            print("ok")
+            return self.queryset.filter(
+                hashtags__name__in=self._hashtags_to_iter_obj(hashtags)
+            ).exclude(author=self.request.user)
+
         self.queryset = (
             self.queryset.select_related("author")
             .prefetch_related("who_liked")
