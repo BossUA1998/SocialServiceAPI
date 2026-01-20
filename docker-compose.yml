@@ -1,0 +1,28 @@
+services:
+  sm_db:
+    image: postgres:16-alpine
+    restart: on-failure
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+
+  social_media:
+    build: .
+    command: >
+      sh -c "python manage.py wait_for_db &&
+            python manage.py migrate &&
+            python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - sm_db
+
+volumes:
+  postgres_data:
