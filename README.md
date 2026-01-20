@@ -32,10 +32,18 @@ A powerful RESTful API service for a social network, built with **Django REST Fr
 * **Django 5+**
 * **Django REST Framework**
 * **Simple JWT** (Authentication)
-* **PostgreSQL** (Recommended DB)
-* **Docker** (Optional)
+* **PostgreSQL**
+* **Docker**
 
 ## ⚙️ Installation & Setup
+
+# 🐳 Run via Docker (Recommended)
+1. **Configure Environment:** Create a `.env` file based on the provided sample
+
+2. **Build and Run: Start the application containers:**
+```bash
+docker-compose up --build
+```
 
 Follow these steps to run the project locally:
 1. **Clone the repository:**
@@ -63,3 +71,4 @@ Follow these steps to run the project locally:
     ```bash
    python manage.py runserver
    ```
+
